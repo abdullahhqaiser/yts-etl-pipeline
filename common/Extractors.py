@@ -2,9 +2,17 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class ScrapeCast():
+class Exractor():
     @staticmethod
     def get_cast_list(imdb_code: str):
+        """This methods generates 
+
+        Args:
+            imdb_code (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
 
         url = f'https://www.imdb.com/title/{imdb_code}/'
 
@@ -17,6 +25,12 @@ class ScrapeCast():
         }
 
         return cast
+
+    @staticmethod
+    def get_movie_data(movie_object : dict):
+        pass
+
+
 
 
 
