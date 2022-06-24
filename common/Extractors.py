@@ -14,7 +14,7 @@ class Exractor():
             _type_: _description_
         """
 
-        url = f'https://www.imdb.com/title/{imdb_code}/'
+        url = f'https://www.imdb.com/title/{imdb_code}/fullcredits'
 
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
