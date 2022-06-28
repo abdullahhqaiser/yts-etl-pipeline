@@ -11,3 +11,6 @@ begin
 end
 
 
+use yts_warehouse
+
+select *from movies
