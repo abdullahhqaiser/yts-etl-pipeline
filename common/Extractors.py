@@ -4,31 +4,30 @@ from bs4 import BeautifulSoup
 
 class Exractor():
     @staticmethod
-    def get_cast_list(imdb_code: str):
-        """This methods generates 
-
-        Args:
-            imdb_code (str): _description_
-
-        Returns:
-            _type_: _description_
-        """
-
-        url = f'https://www.imdb.com/title/{imdb_code}/fullcredits'
-
+    def get_cast(imdb_id : str):
+    
+        url = f'https://www.imdb.com/title/{imdb_id}/fullcredits'
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
-
-        cast = {
-            'actor': [actor.get_text() for actor in soup.find_all('a', class_='sc-11eed019-1 jFeBIw')],
-            'cast': [role.get_text() for role in soup.find_all('span', class_='sc-11eed019-4 esZWnh')]
-        }
-
-        return cast
+        table = soup.find('table', attrs={'class' : 'cast_list'})
+        cast = table.find_all('a')   
+        
+        return re.findall(r'title="(.*?)"', str(cast))
 
     @staticmethod
     def get_movie_data(movie_object : dict):
         pass
+
+    @staticmethod
+    def get_cast(imdb_id : str):
+    
+        url = f'https://www.imdb.com/title/{imdb_id}/fullcredits'
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        table = soup.find('table', attrs={'class' : 'cast_list'})
+        cast = table.find_all('a')   
+        
+        return re.findall(r'title="(.*?)"', str(cast))
 
 
 

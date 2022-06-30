@@ -14,3 +14,24 @@ end
 use yts_warehouse
 
 select *from movies
+select *from genre
+
+declare @gen_t varchar(30) = 'Action'
+declare @imdb_c varchar(30) = 'tt0926084'
+declare @temp_genre_id int;
+if not exists (
+                select * from genre
+                where genre_title = @gen_t
+                )
+
+                begin
+                insert into genre values(@genre_title)
+               
+                
+                select @temp_genre_id  = genre_id from genre where genre_title = @gen_t
+                insert into movie_genre
+                values(@imdb_c, @temp_genre_id)
+                end
+
+
+
