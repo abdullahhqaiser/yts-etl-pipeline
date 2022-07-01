@@ -2,10 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class Exractor():
+class etl():
 
-    @staticmethod
     def load_movie(movie: dict, cursor: pyodbc.Cursor):
+
+        def get_pages():
+            pass
 
         # first, we need to extract current movie's cast list from imdb_id
         cast_list = get_cast(movie['imdb_code'])
@@ -17,9 +19,9 @@ class Exractor():
         insert into movies (imdb_id, title, year, rating, runtime, mpa_rating, language, date_uploaded)
         VALUES (?,?,?,?,?,?,?,?)
         """,
-                    movie['imdb_code'], movie['title_long'], movie['year'], movie['rating'], movie[
-                        'runtime'], movie['mpa_rating'], movie['language'], movie['date_uploaded']
-                    )
+                       movie['imdb_code'], movie['title_long'], movie['year'], movie['rating'], movie[
+                           'runtime'], movie['mpa_rating'], movie['language'], movie['date_uploaded']
+                       )
 
         # 2-> genre and movie_genre table
         for genre in movie['genres']:
@@ -60,8 +62,6 @@ class Exractor():
 
             """, movie['imdb_code'], movie['summary'])
 
-            
-    @staticmethod
     def get_cast(imdb_id: str):
 
         url = f'https://www.imdb.com/title/{imdb_id}/fullcredits'
