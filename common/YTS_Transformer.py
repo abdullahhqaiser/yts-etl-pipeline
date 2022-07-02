@@ -4,10 +4,7 @@ from bs4 import BeautifulSoup
 
 class etl():
 
-    def load_movie(movie: dict, cursor: pyodbc.Cursor):
-
-        def get_pages():
-            pass
+    def insert_movie(movie: dict, cursor: pyodbc.Cursor):
 
         # first, we need to extract current movie's cast list from imdb_id
         cast_list = get_cast(movie['imdb_code'])
@@ -71,3 +68,25 @@ class etl():
         cast = table.find_all('a')
 
         return re.findall(r'title="(.*?)"', str(cast))
+
+    def insert_new_movies(ids: list):
+
+        page_number = 1
+        new_insertion = 0
+        while True:
+            init_page = requests.get(
+                f'https://yts.torrentbay.to/api/v2/list_movies.json?page={page_number}&limit=50').json()
+
+            current_ids = [init_page['data']['movies'][0]
+                           ['id'], init_page['data']['movies'][-1]['id']]
+
+            if current_ids > ids:
+                new_insertion = new_insertion+len(init_page['data']['movies'])
+                for movie in init_page['data']['movies']:
+                    self.insert_movie(movie, cursor)
+
+                page_number = page_number + 1
+            else:
+                break
+
+
