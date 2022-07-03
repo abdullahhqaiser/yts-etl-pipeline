@@ -1,0 +1,8 @@
+api_url: https://yts.torrentbay.to/api/v2/list_movies.json?page={page_number}&limit=50
+
+cast_url: 'https://www.imdb.com/title/{imdb_id}/fullcredits'
+
+track_id:
+- 2154
+- 3333
+

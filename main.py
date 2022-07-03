@@ -1,5 +1,14 @@
-from common.Extractors import Exractor
+import yaml
 
-cast = Exractor.get_cast_list('tt2065945')
+with open('params.yaml') as f:
+    file = yaml.safe_load(f)
 
-print(cast)
+track_id = [2154, 3333]
+
+file['track_id'] = track_id
+
+with open('params.yaml', 'w') as f:
+    yaml.dump(file, f)
+
+
+
