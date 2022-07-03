@@ -102,24 +102,31 @@ class etl():
                 page_number = page_number + 1
             else:
                 update_track_ids(self.params_path, current_ids)
+                self.cursor.close()
                 break
 
     def load():
         # this method going to to load all data from api, and if called other time, this method gonna only insert new data..
+        # first check if there are any ids in params file, if so, then we need to insert new movies
+        if self.track_ids:
+            self.insert_new_movies()
 
-        page_number = 1
+        else:
+            page_number = 1
 
-        while True:
-            page = requests.get(self.api_url).json()
-            
-            if page_number == 1:
-                ids = {'track_id': [page['data']['movies']
-                                    [0], page['data']['movies'][-1]]}
+            while True:
+                page = requests.get(self.api_url).json()
 
-            if 'movies' in page['data'].keys():
-                for movie in page['data']['movies']:
-                    self.insert_movie(movie, self.cursor)
+                if page_number == 1:
+                    ids = {'track_id': [page['data']['movies']
+                                        [0], page['data']['movies'][-1]]}
 
-                page_number = page_number + 1
+                if 'movies' in page['data'].keys():
+                    for movie in page['data']['movies']:
+                        self.insert_movie(movie, self.cursor)
 
-        self.cursor.close()
+                    page_number = page_number + 1
+
+            update_track_ids(self.params_path, ids)
+
+            self.cursor.close()
