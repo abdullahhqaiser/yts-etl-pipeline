@@ -1,14 +1,18 @@
+from common import YTS_Transformer
 import yaml
-
-with open('params.yaml') as f:
-    file = yaml.safe_load(f)
-
-track_id = [2154, 3333]
-
-file['track_id'] = track_id
-
-with open('params.yaml', 'w') as f:
-    yaml.dump(file, f)
+import argparse
 
 
+def main():
+    parser = argparse.ArgumentParser(description='run etl job')
+    parser.add_argument('config')
+    args = parser.parse_args()
 
+    config = yaml.safe_load(open(args.config))
+
+    print(config)
+    
+
+
+if __name__ == "__main__":
+    main()

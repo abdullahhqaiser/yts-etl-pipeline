@@ -1,3 +1,14 @@
 api_url: https://yts.torrentbay.to/api/v2/list_movies.json?page={page_number}&limit=50
 cast_url: https://www.imdb.com/title/{imdb_id}/fullcredits
 track_id:
+
+logger_configs:
+  file_name: 'track.log'
+  format: '%(asctime)s:%(levelname)s:%(message)s'
+  level: logging.DEBUG
+
+database:
+  conn_str: 'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True'
+
+
+  
