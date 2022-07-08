@@ -10,7 +10,7 @@ def main():
 
     config = yaml.safe_load(open(args.config))
 
-    print(config)
+    
     
 
 

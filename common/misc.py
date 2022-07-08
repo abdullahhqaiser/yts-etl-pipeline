@@ -1,20 +1,18 @@
 import yaml
 
 
-class ProcessParams():
+class GetParams():
+    def get_track_ids(meta_path:str) -> list:
+        meta_file = pd.read_json(meta_path)
+        if len(meta_file['track_ids']) == 0:
+            return None
+        else:
+            return list(meta_file['track_ids'])
+
     @staticmethod
-    def get_track_ids(params_path: str) -> list:
-        with open(params_path) as f:
-            file = yaml.safe_load(f)
+    def update_track_ids(meta_path: str, track_id: list) -> None:
+        meta_file = pd.read_json(meta_path)
+        meta_file['track_ids'] = track_id
+        meta_file.to_json(meta_path)
 
-        return file['track_id']
 
-    @staticmethod
-    def update_track_ids(params_path: str, track_id: list) -> None:
-        with open(params_path) as f:
-            file = yaml.safe_load(f)
-
-        file['track_id'] = track_id
-
-        with open(params_path, 'w') as f:
-            yaml.dump(file, f)
