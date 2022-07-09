@@ -2,7 +2,7 @@ from common import YTS_Transformer
 import yaml
 import argparse
 import logging
-
+import sys
 
 def main():
     parser = argparse.ArgumentParser(description='run etl job')
@@ -23,14 +23,18 @@ def main():
     # LOADING DESTINATION CONFIG
     destination_config = config['destination']
 
-    logging.basicConfig(filename=logging_config['file_name'], level = logging_config['level'], format=logging_config['format'])
+    logging.basicConfig(level = logging_config['level'], format=logging_config['format'],
+                        handlers=[
+        logging.FileHandler("debug.log"),
+        logging.StreamHandler(sys.stdout)
+    ])
     logger = logging.getLogger(__name__)
 
     logger.info('this is test')
 
     etl = YTS_Transformer.etl(source_config, tracking_config, destination_config)
 
-
+    
 
 if __name__ == "__main__":
     main()

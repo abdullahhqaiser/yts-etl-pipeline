@@ -6,9 +6,14 @@ destination:
   dest_conn_str: 'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True'
 
 tracking:
-  meta_path: '/meta.json'
+  meta_path: 'meta.json'
 
 logging:
   file_name: 'track.log'
   format: '%(asctime)s:%(levelname)s:%(message)s'
-  level: INFO  
+  level: INFO
+  handlers:
+      [
+        logging.FileHandler("debug.log"),
+        logging.StreamHandler(sys.stdout)
+    ]

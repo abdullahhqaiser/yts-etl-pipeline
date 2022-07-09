@@ -28,6 +28,7 @@ class etl():
         self._logger = logging.getLogger(__name__)
 
         self._logger.info('created ETL class')
+        self.track_ids = ProcessParams.get_track_ids(self.meta_path)
 
 
     def insert_movie(movie: dict, cursor: pyodbc.Cursor):
