@@ -6,26 +6,29 @@ from common.misc import ProcessParams
 import logging
 from sql_scripts.sql_queries import *
 
-class Etl_Config():
 
-    api_url : str
-    cast_url : str
-    destination_conn_str : str
 
 class etl():
 
-    def __init__(self, config:Etl_Config):
+    def __init__(self, source_config:dict, tracking_config:dict, destination_config:dict):
 
         # conn = pyodbc.connect(
         #     'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True')
         # self.cursor = conn.cursor()
 
-        self.api_url = api_url
-        self.cast_url = cast_url
-        self.params_path = 'params.yaml'
-        self.track_ids = ProcessParams.get_track_ids(self.params_path)
-        # self.logger = logging.basicConfig(filename='track.log', level=logging.DEBUG,
-        #                                   format='%(asctime)s:%(levelname)s:%(message)s')
+        # loading source configs
+        self.api_url = source_config['api_url']
+        self.cast_url = source_config['cast_url']
+        
+        # loading tracking configs
+        self.meta_path = tracking_config['meta_path']
+
+        self.conn_str = destination_config['dest_conn_str']
+
+        self._logger = logging.getLogger(__name__)
+
+        self._logger.info('created ETL class')
+
 
     def insert_movie(movie: dict, cursor: pyodbc.Cursor):
 

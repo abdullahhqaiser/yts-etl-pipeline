@@ -1,15 +1,14 @@
-ETL:
+source:
   api_url: https://yts.torrentbay.to/api/v2/list_movies.json?page={page_number}&limit=50
   cast_url: https://www.imdb.com/title/{imdb_id}/fullcredits
+
+destination:
   dest_conn_str: 'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True'
+
+tracking:
   meta_path: '/meta.json'
 
-logger_configs:
+logging:
   file_name: 'track.log'
   format: '%(asctime)s:%(levelname)s:%(message)s'
-  level: logging.DEBUG
-
-
-
-
-  
+  level: INFO  

@@ -1,7 +1,7 @@
 import yaml
 
 
-class GetParams():
+class ProcessParams():
     def get_track_ids(meta_path:str) -> list:
         meta_file = pd.read_json(meta_path)
         if len(meta_file['track_ids']) == 0:
