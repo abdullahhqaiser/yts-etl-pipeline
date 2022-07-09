@@ -7,3 +7,9 @@
 2022-07-09 18:16:25,831:INFO:this is test
 2022-07-09 18:16:38,083:INFO:created ETL class
 2022-07-09 18:16:38,089:INFO:Initial ETL Job Run. Loading all movies
+2022-07-09 18:22:02,312:INFO:this is test
+2022-07-09 18:22:14,494:INFO:created ETL class
+2022-07-09 18:22:14,508:INFO:Initial ETL Job Run. Loading all movies
+2022-07-09 18:22:16,298:INFO:tt1423953
+2022-07-09 18:23:31,242:INFO:this is test
+2022-07-09 18:23:43,473:INFO:created ETL class

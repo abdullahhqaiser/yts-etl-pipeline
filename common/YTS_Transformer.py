@@ -32,6 +32,7 @@ class etl():
     def insert_movie(self, movie: dict, cursor: pyodbc.Cursor):
 
         # first, we need to extract current movie's cast list from imdb_id
+        self._logger.info(movie['imdb_code'])
         cast_list = self.get_cast(movie['imdb_code'])
 
         # now, let's insert data into respective tables one by one
@@ -60,7 +61,7 @@ class etl():
     def get_cast(self, imdb_id: str):
 
         url = self.cast_url
-        page = requests.get(url)
+        page = requests.get(cast_url.format(imdb_id))
         soup = BeautifulSoup(page.content, 'html.parser')
         table = soup.find('table', attrs={'class': 'cast_list'})
         cast = table.find_all('a')
@@ -74,7 +75,7 @@ class etl():
         self._logger.info("Preodic ETL Job run. Loading only new movies.")
 
         while True:
-            init_page = requests.get(self.api_url).json()
+            init_page = requests.get(self.api_url.format(page_number)).json()
 
             # track_ids of current page or initial page.
             current_ids = [init_page['data']['movies'][0]
@@ -103,7 +104,7 @@ class etl():
             page_number = 1
             self._logger.info("Initial ETL Job Run. Loading all movies")
             while True:
-                page = requests.get(self.api_url).json()
+                page = requests.get(self.api_url.format(page_number)).json()
 
                 if page_number == 1:
                     ids = {'track_id': [page['data']['movies']
