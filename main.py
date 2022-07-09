@@ -33,6 +33,7 @@ def main():
     logger.info('this is test')
 
     etl = YTS_Transformer.etl(source_config, tracking_config, destination_config)
+    etl.load()
 
     
 

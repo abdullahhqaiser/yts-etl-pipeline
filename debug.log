@@ -1,6 +1,9 @@
-2022-07-09 18:00:14,200:INFO:this is test
-2022-07-09 18:00:14,200:INFO:created ETL class
-2022-07-09 18:00:50,032:INFO:this is test
-2022-07-09 18:00:50,032:INFO:created ETL class
-2022-07-09 18:02:40,151:INFO:this is test
-2022-07-09 18:02:40,151:INFO:created ETL class
+2022-07-09 18:12:59,072:INFO:this is test
+2022-07-09 18:13:11,378:INFO:created ETL class
+2022-07-09 18:13:11,403:INFO:Initial ETL Job Run. Loading all movies
+2022-07-09 18:15:10,096:INFO:this is test
+2022-07-09 18:15:22,356:INFO:created ETL class
+2022-07-09 18:15:22,368:INFO:Initial ETL Job Run. Loading all movies
+2022-07-09 18:16:25,831:INFO:this is test
+2022-07-09 18:16:38,083:INFO:created ETL class
+2022-07-09 18:16:38,089:INFO:Initial ETL Job Run. Loading all movies

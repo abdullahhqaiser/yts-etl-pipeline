@@ -7,19 +7,18 @@ import logging
 from sql_scripts.sql_queries import *
 
 
-
 class etl():
 
-    def __init__(self, source_config:dict, tracking_config:dict, destination_config:dict):
+    def __init__(self, source_config: dict, tracking_config: dict, destination_config: dict):
 
-        # conn = pyodbc.connect(
-        #     'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True')
-        # self.cursor = conn.cursor()
+        conn = pyodbc.connect(
+            'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True')
+        self.cursor = conn.cursor()
 
         # loading source configs
         self.api_url = source_config['api_url']
         self.cast_url = source_config['cast_url']
-        
+
         # loading tracking configs
         self.meta_path = tracking_config['meta_path']
 
@@ -30,11 +29,10 @@ class etl():
         self._logger.info('created ETL class')
         self.track_ids = ProcessParams.get_track_ids(self.meta_path)
 
-
-    def insert_movie(movie: dict, cursor: pyodbc.Cursor):
+    def insert_movie(self, movie: dict, cursor: pyodbc.Cursor):
 
         # first, we need to extract current movie's cast list from imdb_id
-        cast_list = get_cast(movie['imdb_code'])
+        cast_list = self.get_cast(movie['imdb_code'])
 
         # now, let's insert data into respective tables one by one
 
@@ -56,20 +54,25 @@ class etl():
 
         cursor.execute(summary_insert, movie['imdb_code'], movie['summary'])
 
-    def get_cast(imdb_id: str):
+        self._logger.info(
+            f"{movie['imdb_code']} ---- {movie['title_long']} INSERTED!")
+
+    def get_cast(self, imdb_id: str):
 
         url = self.cast_url
         page = requests.get(url)
         soup = BeautifulSoup(page.content, 'html.parser')
         table = soup.find('table', attrs={'class': 'cast_list'})
         cast = table.find_all('a')
-
+        
         return re.findall(r'title="(.*?)"', str(cast))
 
-    def insert_new_movies():
+    def insert_new_movies(self):
 
         page_number = 1
         new_insertion = 0
+        self._logger.info("Preodic ETL Job run. Loading only new movies.")
+
         while True:
             init_page = requests.get(self.api_url).json()
 
@@ -90,7 +93,7 @@ class etl():
                 self.cursor.close()
                 break
 
-    def load():
+    def load(self):
         # this method going to to load all data from api, and if called other time, this method gonna only insert new data..
         # first check if there are any ids in params file, if so, then we need to insert new movies
         if self.track_ids:
@@ -98,7 +101,7 @@ class etl():
 
         else:
             page_number = 1
-
+            self._logger.info("Initial ETL Job Run. Loading all movies")
             while True:
                 page = requests.get(self.api_url).json()
 
@@ -115,3 +118,4 @@ class etl():
             ProcessParams.update_track_ids(self.params_path, ids)
 
             self.cursor.close()
+            self._logger('ETL Job Finished.')
