@@ -5,6 +5,7 @@ import json
 from common.misc import ProcessParams
 import logging
 from sql_scripts.sql_queries import *
+import re
 
 
 class etl():
@@ -32,8 +33,7 @@ class etl():
     def insert_movie(self, movie: dict, cursor: pyodbc.Cursor):
 
         # first, we need to extract current movie's cast list from imdb_id
-        self._logger.info(movie['imdb_code'])
-        cast_list = self.get_cast(movie['imdb_code'])
+        # cast_list = self.get_cast(movie['imdb_code'])
 
         # now, let's insert data into respective tables one by one
 
@@ -48,10 +48,10 @@ class etl():
             cursor.execute(genre_moviegenre_insert, genre,
                            genre, genre, movie['imdb_code'])
 
-        # 3-> cast and movie_cast
-        for actor in cast_list:
-            cursor.execute(cast_moviecast_insert, actor,
-                           actor, actor, movie_a['imdb_code'])
+        # # 3-> cast and movie_cast
+        # for actor in cast_list:
+        #     cursor.execute(cast_moviecast_insert, actor,
+        #                    actor, actor, movie['imdb_code'])
 
         cursor.execute(summary_insert, movie['imdb_code'], movie['summary'])
 
@@ -61,7 +61,7 @@ class etl():
     def get_cast(self, imdb_id: str):
 
         url = self.cast_url
-        page = requests.get(cast_url.format(imdb_id))
+        page = requests.get(self.cast_url.format(imdb_id))
         soup = BeautifulSoup(page.content, 'html.parser')
         table = soup.find('table', attrs={'class': 'cast_list'})
         cast = table.find_all('a')
@@ -104,6 +104,7 @@ class etl():
             page_number = 1
             self._logger.info("Initial ETL Job Run. Loading all movies")
             while True:
+                self._logger.info(f"current page is {page_number}")
                 page = requests.get(self.api_url.format(page_number)).json()
 
                 if page_number == 1:
@@ -115,6 +116,7 @@ class etl():
                         self.insert_movie(movie, self.cursor)
 
                     page_number = page_number + 1
+
 
             ProcessParams.update_track_ids(self.params_path, ids)
 
