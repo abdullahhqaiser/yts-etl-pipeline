@@ -37,26 +37,35 @@ class etl():
 
         # now, let's insert data into respective tables one by one
 
-        # 1-> Movie table
-        cursor.execute(movie_table_insert,
-                       movie['imdb_code'], movie['title_long'], movie['year'], movie['rating'], movie[
-                           'runtime'], movie['mpa_rating'], movie['language'], movie['date_uploaded']
-                       )
+        # but before that, we need to check whether that movie exists in db or not,
+        if movie['imdb_code'] not in [i[0] for i in cursor.execute("select imdb_id from movies")]:
+            
+            # 1-> Movie table
+            cursor.execute(movie_table_insert,
+                           movie['imdb_code'], movie['title_long'], movie['year'], movie['rating'], movie[
+                               'runtime'], movie['mpa_rating'], movie['language'], movie['date_uploaded']
+                           )
 
-        # 2-> genre and movie_genre table
-        for genre in movie['genres']:
-            cursor.execute(genre_moviegenre_insert, genre,
-                           genre, genre, movie['imdb_code'])
+            # 2-> genre and movie_genre table
+            for genre in movie['genres']:
+                cursor.execute(genre_moviegenre_insert, genre,
+                               genre, genre, movie['imdb_code'])
 
-        # # 3-> cast and movie_cast
-        # for actor in cast_list:
-        #     cursor.execute(cast_moviecast_insert, actor,
-        #                    actor, actor, movie['imdb_code'])
+            # # 3-> cast and movie_cast
+            # for actor in cast_list:
+            #     cursor.execute(cast_moviecast_insert, actor,
+            #                    actor, actor, movie['imdb_code'])
 
-        cursor.execute(summary_insert, movie['imdb_code'], movie['summary'])
+            cursor.execute(
+                summary_insert, movie['imdb_code'], movie['summary'])
 
-        self._logger.info(
-            f"{movie['imdb_code']} ---- {movie['title_long']} INSERTED!")
+
+            self._logger.info(
+                f" {movie['title_long']} INSERTED!")
+        else:
+            self._logger.info(
+                f" {movie['title_long']} DUPLICATE FOUND, IGNORING!")
+
 
     def get_cast(self, imdb_id: str):
 
@@ -65,7 +74,7 @@ class etl():
         soup = BeautifulSoup(page.content, 'html.parser')
         table = soup.find('table', attrs={'class': 'cast_list'})
         cast = table.find_all('a')
-        
+
         return re.findall(r'title="(.*?)"', str(cast))
 
     def insert_new_movies(self):
@@ -116,7 +125,6 @@ class etl():
                         self.insert_movie(movie, self.cursor)
 
                     page_number = page_number + 1
-
 
             ProcessParams.update_track_ids(self.params_path, ids)
 
