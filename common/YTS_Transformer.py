@@ -42,8 +42,8 @@ class etl():
             
             # 1-> Movie table
             cursor.execute(movie_table_insert,
-                           movie['imdb_code'], movie['title_long'], movie['year'], movie['rating'], movie[
-                               'runtime'], movie['mpa_rating'], movie['language'], movie['date_uploaded']
+                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title_long'), ProcessParams.validate(movie, 'year'), ProcessParams.validate(movie, 'rating'), ProcessParams.validate(movie, 
+                               'runtime'), ProcessParams.validate(movie, 'mpa_rating'), ProcessParams.validate(movie, 'language'), ProcessParams.validate(movie, 'date_uploaded')
                            )
 
             # 2-> genre and movie_genre table

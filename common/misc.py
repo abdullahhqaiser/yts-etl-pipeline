@@ -15,4 +15,9 @@ class ProcessParams():
         meta_file['track_ids'] = track_id
         meta_file.to_json(meta_path)
 
-
+    @staticmethod
+    def validate(movie:dict, key:str):
+        if key in movie.keys():
+            return movie.get(key)
+        else:
+            return 'None'
