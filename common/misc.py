@@ -1,8 +1,9 @@
 import yaml
 import pandas as pd
 
+
 class ProcessParams():
-    def get_track_ids(meta_path:str) -> list:
+    def get_track_ids(meta_path: str) -> list:
         meta_file = pd.read_json(meta_path)
         if len(meta_file['track_ids']) == 0:
             return None
@@ -16,8 +17,13 @@ class ProcessParams():
         meta_file.to_json(meta_path)
 
     @staticmethod
-    def validate(movie:dict, key:str):
+    def validate(movie: dict, key: str):
+
         if key in movie.keys():
+
             return movie.get(key)
+
+        elif key == 'date_uploaded':
+            return movie['torrents'][0].get(key)
         else:
             return 'None'

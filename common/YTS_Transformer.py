@@ -6,6 +6,7 @@ from common.misc import ProcessParams
 import logging
 from sql_scripts.sql_queries import *
 import re
+from datetime import datetime as dt
 
 
 class etl():
@@ -39,33 +40,33 @@ class etl():
 
         # but before that, we need to check whether that movie exists in db or not,
         if movie['imdb_code'] not in [i[0] for i in cursor.execute("select imdb_id from movies")]:
-            
+
             # 1-> Movie table
             cursor.execute(movie_table_insert,
-                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title_long'), ProcessParams.validate(movie, 'year'), ProcessParams.validate(movie, 'rating'), ProcessParams.validate(movie, 
-                               'runtime'), ProcessParams.validate(movie, 'mpa_rating'), ProcessParams.validate(movie, 'language'), ProcessParams.validate(movie, 'date_uploaded')
+                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title_long'), ProcessParams.validate(movie, 'year'),
+                           ProcessParams.validate(movie, 'rating'), ProcessParams.validate(movie,'runtime'), ProcessParams.validate(movie, 'mpa_rating'),
+                           ProcessParams.validate(movie, 'language'), dt.strptime(ProcessParams.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')
                            )
 
             # 2-> genre and movie_genre table
-            for genre in movie['genres']:
-                cursor.execute(genre_moviegenre_insert, genre,
-                               genre, genre, movie['imdb_code'])
+            if 'genres' in movie.keys():
+                for genre in movie['genres']:
+                    cursor.execute(genre_moviegenre_insert, genre,
+                                   genre, genre, movie['imdb_code'])
 
             # # 3-> cast and movie_cast
             # for actor in cast_list:
             #     cursor.execute(cast_moviecast_insert, actor,
             #                    actor, actor, movie['imdb_code'])
-
-            cursor.execute(
-                summary_insert, movie['imdb_code'], movie['summary'])
-
+            if 'summary' in movie.keys():
+                cursor.execute(
+                    summary_insert, movie['imdb_code'], movie['summary'])
 
             self._logger.info(
                 f" {movie['title_long']} INSERTED!")
         else:
             self._logger.info(
                 f" {movie['title_long']} DUPLICATE FOUND, IGNORING!")
-
 
     def get_cast(self, imdb_id: str):
 
