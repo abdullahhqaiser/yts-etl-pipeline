@@ -13,9 +13,9 @@ class etl():
 
     def __init__(self, source_config: dict, tracking_config: dict, destination_config: dict):
 
-        conn = pyodbc.connect(
+        self.conn = pyodbc.connect(
             'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True')
-        self.cursor = conn.cursor()
+        self.cursor = self.conn.cursor()
 
         # loading source configs
         self.api_url = source_config['api_url']
@@ -43,7 +43,7 @@ class etl():
 
             # 1-> Movie table
             cursor.execute(movie_table_insert,
-                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title_long'), ProcessParams.validate(movie, 'year'),
+                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title'), ProcessParams.validate(movie, 'year'),
                            ProcessParams.validate(movie, 'rating'), ProcessParams.validate(movie,'runtime'), ProcessParams.validate(movie, 'mpa_rating'),
                            ProcessParams.validate(movie, 'language'), dt.strptime(ProcessParams.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')
                            )
@@ -64,9 +64,9 @@ class etl():
 
             self._logger.info(
                 f" {movie['title_long']} INSERTED!")
-        else:
-            self._logger.info(
-                f" {movie['title_long']} DUPLICATE FOUND, IGNORING!")
+        # else:
+        #     self._logger.info(
+        #         f" {movie['title_long']} DUPLICATE FOUND, IGNORING!")
 
     def get_cast(self, imdb_id: str):
 
@@ -114,7 +114,7 @@ class etl():
             page_number = 1
             self._logger.info("Initial ETL Job Run. Loading all movies")
             while True:
-                self._logger.info(f"current page is {page_number}")
+                self._logger.info(f" current page is {page_number}")
                 page = requests.get(self.api_url.format(page_number)).json()
 
                 if page_number == 1:
@@ -126,6 +126,8 @@ class etl():
                         self.insert_movie(movie, self.cursor)
 
                     page_number = page_number + 1
+                    self.conn.commit()
+                    
 
             ProcessParams.update_track_ids(self.params_path, ids)
 
