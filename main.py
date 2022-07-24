@@ -3,6 +3,7 @@ import yaml
 import argparse
 import logging
 import sys
+import pandas as pd
 
 
 def main():
@@ -31,12 +32,13 @@ def main():
     ])
     logger = logging.getLogger(__name__)
 
-    logger.info('this is test')
+    logger.info(' YTS API ETL JOB...')
 
     etl = YTS_Transformer.etl(
         source_config, tracking_config, destination_config)
 
     etl.load()
+
 
 if __name__ == "__main__":
     main()

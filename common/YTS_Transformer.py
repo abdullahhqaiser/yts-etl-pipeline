@@ -7,6 +7,7 @@ import logging
 from sql_scripts.sql_queries import *
 import re
 from datetime import datetime as dt
+import pandas as pd
 
 
 class etl():
@@ -19,7 +20,7 @@ class etl():
 
         # loading source configs
         self.api_url = source_config['api_url']
-        self.cast_url = source_config['cast_url']
+        # self.cast_url = source_config['cast_url']
 
         # loading tracking configs
         self.meta_path = tracking_config['meta_path']
@@ -30,6 +31,7 @@ class etl():
 
         self._logger.info('created ETL class')
         self.track_ids = ProcessParams.get_track_ids(self.meta_path)
+        
 
     def insert_movie(self, movie: dict, cursor: pyodbc.Cursor):
 
@@ -43,9 +45,12 @@ class etl():
 
             # 1-> Movie table
             cursor.execute(movie_table_insert,
-                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(movie, 'title'), ProcessParams.validate(movie, 'year'),
-                           ProcessParams.validate(movie, 'rating'), ProcessParams.validate(movie,'runtime'), ProcessParams.validate(movie, 'mpa_rating'),
-                           ProcessParams.validate(movie, 'language'), dt.strptime(ProcessParams.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')
+                           ProcessParams.validate(movie, 'imdb_code'), ProcessParams.validate(
+                               movie, 'title'), ProcessParams.validate(movie, 'year'),
+                           ProcessParams.validate(movie, 'rating'), ProcessParams.validate(
+                               movie, 'runtime'), ProcessParams.validate(movie, 'mpa_rating'),
+                           ProcessParams.validate(movie, 'language'), dt.strptime(
+                               ProcessParams.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')
                            )
 
             # 2-> genre and movie_genre table
@@ -62,29 +67,34 @@ class etl():
                 cursor.execute(
                     summary_insert, movie['imdb_code'], movie['summary'])
 
-            self._logger.info(
-                f" {movie['title_long']} INSERTED!")
+            msg = str(movie['title'])
+            self._logger.info(f" {msg} INSERTED!")
         # else:
         #     self._logger.info(
         #         f" {movie['title_long']} DUPLICATE FOUND, IGNORING!")
 
-    def get_cast(self, imdb_id: str):
+    # def get_cast(self, imdb_id: str):
 
-        url = self.cast_url
-        page = requests.get(self.cast_url.format(imdb_id))
-        soup = BeautifulSoup(page.content, 'html.parser')
-        table = soup.find('table', attrs={'class': 'cast_list'})
-        cast = table.find_all('a')
+    #     url = self.cast_url
+    #     page = requests.get(self.cast_url.format(imdb_id))
+    #     soup = BeautifulSoup(page.content, 'html.parser')
+    #     table = soup.find('table', attrs={'class': 'cast_list'})
+    #     cast = table.find_all('a')
 
-        return re.findall(r'title="(.*?)"', str(cast))
+    #     return re.findall(r'title="(.*?)"', str(cast))
 
     def insert_new_movies(self):
 
-        page_number = 1
-        new_insertion = 0
-        self._logger.info("Preodic ETL Job run. Loading only new movies.")
+        with open('../' + self.meta_path) as f:
+            meta_file = json.load(f)
+        
 
-        while True:
+
+        page_number = meta_file['page_number']
+        new_insertion = 0
+        self._logger.info(" Preodic ETL Job run. Loading New movies.")
+
+        while True: 
             init_page = requests.get(self.api_url.format(page_number)).json()
 
             # track_ids of current page or initial page.
@@ -107,6 +117,7 @@ class etl():
     def load(self):
         # this method going to to load all data from api, and if called other time, this method gonna only insert new data..
         # first check if there are any ids in params file, if so, then we need to insert new movies
+
         if self.track_ids:
             self.insert_new_movies()
 
@@ -127,8 +138,8 @@ class etl():
 
                     page_number = page_number + 1
                     self.conn.commit()
-                    
 
+            self._logger.info(" Saving meta file...")
             ProcessParams.update_track_ids(self.params_path, ids)
 
             self.cursor.close()
