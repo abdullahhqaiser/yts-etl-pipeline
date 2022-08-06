@@ -1,5 +1,6 @@
 import yaml
 import pandas as pd
+import json
 
 
 class ProcessParams():
@@ -27,3 +28,18 @@ class ProcessParams():
             return movie['torrents'][0].get(key)
         else:
             return 'None'
+
+    @staticmethod
+    def save_meta_data(metapath:str, ids:list, page_no:int):
+        print('saving meta data.................................')
+        with open(metapath, 'r') as f:
+            file = json.load(f)
+
+
+        file['track_ids'] = ids
+        file['page_no']   = page_no
+        print(file)
+
+        with open(metapath, 'w') as f:
+            json.dump(file, f)
+        
