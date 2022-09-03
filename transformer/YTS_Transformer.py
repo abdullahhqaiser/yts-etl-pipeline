@@ -2,12 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import pyodbc
 import json
-from common.misc import ProcessParams
+from misc import ProcessParams
 import logging
-from sql_scripts.sql_queries import *
 import re
 from datetime import datetime as dt
 import pandas as pd
+
 
 
 class etl():
@@ -25,12 +25,11 @@ class etl():
         # loading tracking configs
         self.meta_path = tracking_config['meta_path']
 
-        self.conn_str = destination_config['dest_conn_str']
-
         self._logger = logging.getLogger(__name__)
 
         self.track_ids = ProcessParams.get_track_ids(self.meta_path)
         self.ids = []
+        
 
     def insert_movie(self, movie: dict, cursor: pyodbc.Cursor):
 
@@ -62,11 +61,11 @@ class etl():
             # for actor in cast_list:
             #     cursor.execute(cast_moviecast_insert, actor,
             #                    actor, actor, movie['imdb_code'])
-            if 'summary' in movie.keys():
-                cursor.execute(
-                    summary_insert, movie['imdb_code'], movie['summary'])
+                if 'summary' in movie.keys():
+                    cursor.execute(
+                        summary_insert, movie['imdb_code'], movie['summary'])
 
-            msg = str(movie['title'])
+            msg = str(movie['title'])   
             self._logger.info(f" {msg} INSERTED!")
         # else:
         #     self._logger.info(
@@ -82,7 +81,7 @@ class etl():
 
     #     return re.findall(r'title="(.*?)"', str(cast))
 
-    def insert_new_movies(self):
+    def check_new_movies(self):
 
         self._logger.info(" Checking for new movies")
         with open(self.meta_path) as f:
@@ -132,7 +131,7 @@ class etl():
         page_number = meta_file['page_no']
 
         if self.track_ids:
-            self.insert_new_movies()
+            self.check_new_movies()
 
         while True:
 
@@ -149,7 +148,7 @@ class etl():
                 if 'movies' in page['data'].keys():
                     for movie in page['data']['movies']:
                         self.insert_movie(movie, self.cursor)
-
+    
                     page_number = page_number + 1
                     # self.conn.commit()
             except KeyboardInterrupt:

@@ -2,9 +2,6 @@ source:
   api_url: "https://yts.torrentbay.to/api/v2/list_movies.json?page={}&limit=50"
   cast_url: "https://www.imdb.com/title/{}/fullcredits"
 
-destination:
-  dest_conn_str: 'Driver={SQL Server};''Server=DESKTOP-K8VV6KV;''Database=yts_warehouse;''Trusted_Connection=yes;''autocommit=True'
-
 tracking:
   meta_path: 'meta.json'
 
@@ -14,6 +11,6 @@ logging:
   level: INFO
   handlers:
       [
-        logging.FileHandler("debug.log"),
+        logging.FileHandler("track.log"),
         logging.StreamHandler(sys.stdout)
     ]

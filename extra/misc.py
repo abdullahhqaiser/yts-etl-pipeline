@@ -3,7 +3,7 @@ import pandas as pd
 import json
 
 
-class ProcessParams():
+class Helpers():
     def get_track_ids(meta_path: str) -> list:
         meta_file = pd.read_json(meta_path)
         if len(meta_file['track_ids']) == 0:
