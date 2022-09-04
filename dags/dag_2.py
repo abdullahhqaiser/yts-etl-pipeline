@@ -33,6 +33,9 @@ def _check_meta():
 
 
 def _load_movies():
+    hook = MsSqlHook(mssql_conn_id="azure_wh")
+    conn = hook.get_conn()
+    cur = conn.cursor()
     # grab page number from airflow backend
     meta_data = ast.literal_eval(Variable.get('meta_data', deserialize_json=False))
     api_url = Variable.get("api_url")
@@ -48,10 +51,13 @@ def _load_movies():
     while True:
         if 'movies' in page['data'].keys():
             for movie in page['data']['movies']:
-                _insert_movie(movie)
-
-        page_number = page_number + 1
-        page = requests.get(api_url.format(page_number)).json()
+                _insert_movie(movie, cur)
+        
+            page_number = page_number + 1
+            page = requests.get(api_url.format(page_number)).json()
+            logging.info(f"current page {page_number}")
+        else:
+            break
 
     ids = meta_data["track_ids"]
     Variable.set(key='meta_data', value={
@@ -59,6 +65,9 @@ def _load_movies():
 
 
 def _load_new_movies():
+    hook = MsSqlHook(mssql_conn_id="azure_wh")
+    conn = hook.get_conn()
+    cur = conn.cursor()
     meta_data = ast.literal_eval(Variable.get('meta_data', deserialize_json=False))
     logging.info("-----------------------loading new movies..")
 
@@ -77,45 +86,42 @@ def _load_new_movies():
         if current_ids > last_ids:
             for movie in page['data']['movies']:
                 print(f"---------------inserting {movie}")
-                _insert_movie(movie)
+                _insert_movie(movie, cur)
 
+            page_number = page_number + 1
+            page = requests.get(api_url.format(page_number)).json()
+            logging.info(f"current page {page_number}")
         else:
             break
 
     _load_movies()
 
 
-def _insert_movie(movie:dict):
+def _insert_movie(movie:dict, cur):
 
-    logging.info(f"inserting {movie}")
-    hook = MsSqlHook(mssql_conn_id="azure_wh")
-    conn = hook.get_conn()
-    cur = conn.cursor()
+    msg = movie['title']
+    logging.info(f"inserting {msg}")
+    
     cur.execute("select imdb_id from movies")
 
     if movie['imdb_code'] not in [i[0] for i in cur.fetchall()]:
-        cur.execute(movie_table_insert, Helpers.validate(
+        cur.execute(movie_table_insert,(Helpers.validate(movie, 'imdb_code'), Helpers.validate(
                                movie, 'title'), Helpers.validate(movie, 'year'),
                            Helpers.validate(movie, 'rating'), Helpers.validate(
                                movie, 'runtime'), Helpers.validate(movie, 'mpa_rating'),
-                           Helpers.validate(movie, 'language'), dt.strptime(
-                               Helpers.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S'))
+                           Helpers.validate(movie, 'language'), datetime.strptime(Helpers.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')))
 
         if 'genres' in movie.keys():
                 for genre in movie['genres']:
-                    cur.execute(genre_moviegenre_insert, genre,
-                                   genre, genre, movie['imdb_code'])
+                    cur.execute(genre_moviegenre_insert, (genre,
+                                   genre, genre, movie['imdb_code']))
 
         if 'summary' in movie.keys():
                 cur.execute(
-                    summary_insert, movie['imdb_code'], movie['summary'])
+                    summary_insert, (movie['imdb_code'], movie['summary']))
 
-    msg = str(movie['title'])
-    print(f"{msg} INSERTED.")
-        
 
-        
-
+    
 """--------------------------------<AIRFLOW CODE>----------------------------------------"""
 
 default_args = {
@@ -124,12 +130,13 @@ default_args = {
     'retries_delay': timedelta(minutes=1)
 }
 
-with DAG(dag_id='testing_41', start_date=datetime(2022, 9, 3), schedule_interval='@daily', default_args=default_args) as dag:
+with DAG(dag_id='testing_47', start_date=datetime(2022, 9, 3), schedule_interval='@daily', default_args=default_args) as dag:
     check_meta = BranchPythonOperator(task_id = "check_meta", python_callable=_check_meta)
 
     load_movies = PythonOperator(task_id = "load_movies", python_callable=_load_movies)
     load_new_movies = PythonOperator(task_id = "load_new_movies", python_callable=_load_new_movies)
 
     check_meta >> [load_movies, load_new_movies]
+
 
     
