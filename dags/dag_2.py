@@ -14,8 +14,10 @@ import logging
 import requests
 import pyodbc
 import ast
+import time
 
-
+hook = MsSqlHook(mssql_conn_id="azure_wh", supports_autocommit= True)
+conn = hook.get_conn()
 
 """--------------------------------<FUNCTIONS>----------------------------------------"""
 
@@ -24,87 +26,83 @@ def _check_meta():
     logging.info("--------------------------CHECKING METADATA")
     meta_data = ast.literal_eval(Variable.get("meta_data", deserialize_json=False))
 
-    if meta_data["track_ids"]:
+    if meta_data['track_ids']:
         return 'load_new_movies'
     else:
         return 'load_movies'
 
 
 
-
 def _load_movies():
-    hook = MsSqlHook(mssql_conn_id="azure_wh")
-    conn = hook.get_conn()
-    cur = conn.cursor()
-    # grab page number from airflow backend
+
+    # grab page number from airflow backend 
     meta_data = ast.literal_eval(Variable.get('meta_data', deserialize_json=False))
+    page_number = meta_data['page_no']
     api_url = Variable.get("api_url")
-    page_number = meta_data["page_no"]
+    ids = meta_data["track_ids"]
+
+    logging.info("-----------------------loading movies..")
 
     page = requests.get(api_url.format(page_number)).json()
-
     if page_number == 1:
+        ids = [page['data']['movies'][0]['id'], page['data']['movies'][-1]['id']]
+        Variable.set(key='meta_data', value={"track_ids" : ids, "page_no" : page_number})
 
-        Variable.set(key='meta_data', value={"track_ids": [page['data']['movies'][0]['id'],
-                                                           page['data']['movies'][-1]['id']], "page_no": page_number})
 
-    while True:
-        if 'movies' in page['data'].keys():
-            for movie in page['data']['movies']:
-                _insert_movie(movie, cur)
-        
-            page_number = page_number + 1
-            page = requests.get(api_url.format(page_number)).json()
-            logging.info(f"current page {page_number}")
-        else:
-            break
+    while 'movies' in page['data'].keys():
+        logging.info(f"current page {page_number}")
+        logging.info(f"IDS = {[page['data']['movies'][0]['id'], page['data']['movies'][-1]['id']]}")
 
-    ids = meta_data["track_ids"]
-    Variable.set(key='meta_data', value={
-                 "track_ids": ids, "page_no": page_number})
+        for movie in page['data']['movies']:
+            _insert_movie(movie, conn)
+
+        conn.commit()
+        Variable.set(key = "meta_data", value ={"track_ids": ids, "page_no" : page_number})
+        page_number = page_number + 1
+        page = requests.get(api_url.format(page_number)).json()
+  
 
 
 def _load_new_movies():
-    hook = MsSqlHook(mssql_conn_id="azure_wh")
-    conn = hook.get_conn()
-    cur = conn.cursor()
-    meta_data = ast.literal_eval(Variable.get('meta_data', deserialize_json=False))
-    logging.info("-----------------------loading new movies..")
 
+    meta_data = ast.literal_eval(Variable.get('meta_data', deserialize_json=False))
     last_ids = meta_data['track_ids']
     page_number = 1
     api_url = Variable.get('api_url')
     page = requests.get(api_url.format(page_number)).json()
+    current_ids = [page['data']['movies'][0]['id'], page['data']['movies'][-1]['id']]
+
+    logging.info("-----------------------loading new movies..")
 
     Variable.set(key="meta_data", value={"track_ids": [page['data']['movies'][0]['id'],
                                                        page['data']['movies'][-1]['id']], "page_no": meta_data['page_no']})
 
-    while True:
-        current_ids = [page['data']['movies'][0]['id'],
-                       page['data']['movies'][-1]['id']]
+    
+    while current_ids > last_ids:
 
-        if current_ids > last_ids:
-            for movie in page['data']['movies']:
-                print(f"---------------inserting {movie}")
-                _insert_movie(movie, cur)
+        logging.info(f"current page {page_number}")
+        logging.info(f"IDS = {page['data']['movies'][0]['id']}, {page['data']['movies'][-1]['id']}")
+        for movie in page['data']['movies']:
+            _insert_movie(movie, conn)
 
-            page_number = page_number + 1
-            page = requests.get(api_url.format(page_number)).json()
-            logging.info(f"current page {page_number}")
-        else:
-            break
+        conn.commit()
+        page_number = page_number + 1
+        page = requests.get(api_url.format(page_number)).json()
+        current_ids = [page['data']['movies'][0]['id'], page['data']['movies'][-1]['id']]
 
     _load_movies()
 
 
-def _insert_movie(movie:dict, cur):
+def _insert_movie(movie:dict, conn):
 
-    msg = movie['title']
-    logging.info(f"inserting {msg}")
-    
+    cur = conn.cursor()
+    msg = movie['title']    
+
     cur.execute("select imdb_id from movies")
 
     if movie['imdb_code'] not in [i[0] for i in cur.fetchall()]:
+        cur = conn.cursor()
+
         cur.execute(movie_table_insert,(Helpers.validate(movie, 'imdb_code'), Helpers.validate(
                                movie, 'title'), Helpers.validate(movie, 'year'),
                            Helpers.validate(movie, 'rating'), Helpers.validate(
@@ -112,16 +110,21 @@ def _insert_movie(movie:dict, cur):
                            Helpers.validate(movie, 'language'), datetime.strptime(Helpers.validate(movie, 'date_uploaded'), '%Y-%m-%d %H:%M:%S')))
 
         if 'genres' in movie.keys():
+
                 for genre in movie['genres']:
                     cur.execute(genre_moviegenre_insert, (genre,
                                    genre, genre, movie['imdb_code']))
 
         if 'summary' in movie.keys():
+
                 cur.execute(
-                    summary_insert, (movie['imdb_code'], movie['summary']))
+                    summary_insert, (movie['imdb_code'], movie['summary']))    
+        logging.info(f"inserted {msg}")
+    else:
+        logging.info(f"skipped {msg}")
 
 
-    
+
 """--------------------------------<AIRFLOW CODE>----------------------------------------"""
 
 default_args = {
@@ -130,7 +133,7 @@ default_args = {
     'retries_delay': timedelta(minutes=1)
 }
 
-with DAG(dag_id='testing_47', start_date=datetime(2022, 9, 3), schedule_interval='@daily', default_args=default_args) as dag:
+with DAG(dag_id='testing_72', start_date=datetime(2022, 9, 5), schedule_interval='@daily', default_args=default_args) as dag:
     check_meta = BranchPythonOperator(task_id = "check_meta", python_callable=_check_meta)
 
     load_movies = PythonOperator(task_id = "load_movies", python_callable=_load_movies)
