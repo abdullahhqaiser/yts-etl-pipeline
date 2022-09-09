@@ -27,7 +27,7 @@ Building an airflow etl workflow that can get data from yts api and store data i
 
 
 
-## Screenshots
+## Workflow Diagram
 
-![App Screenshot](https://via.placeholder.com/468x300?text=App+Screenshot+Here)
 
+![Untitled Diagram drawio (1)](https://user-images.githubusercontent.com/88339218/189329045-4a85f53b-0a7b-4480-b6c0-ca30cbfddde9.png)
